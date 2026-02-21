@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AgroChar — Buyer Dashboard</title>
+<link rel="stylesheet" href="/css/buyer.css">
+<style>
+/* ── Buyer Theme ── */
+body { background: var(--fog); }
+
+.sidebar        { background: var(--ink); }
+.logo-mark      { color: var(--aqua); }
+.nav-item.active { background: linear-gradient(135deg, var(--teal), var(--cyan)); color: #fff; border: none; opacity: 1; }
+.nav-item.active:hover { background: linear-gradient(135deg, var(--teal), var(--cyan)); }
+.nav-badge      { background: rgba(61,217,184,0.15); color: var(--aqua); }
+
+.topbar { background: #fff; }
+.topbar .page-title { color: var(--ink); }
+.card { background: #fff; }
+.card-title { color: var(--ink); }
+
+/* ── KPI Row ── */
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 26px;
+}
+
+.kpi {
+  background: #fff;
+  border-radius: var(--r-lg);
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.kpi-icon {
+  width: 48px; height: 48px;
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.35rem; flex-shrink: 0;
+}
+
+.kpi-val   { font-family: 'DM Mono', monospace; font-size: 1.5rem; font-weight: 600; color: var(--ink); line-height: 1; }
+.kpi-label { font-size: 0.68rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; margin-top: 4px; }
+.kpi-delta { font-size: 0.72rem; font-weight: 600; margin-top: 6px; }
+.delta-up  { color: var(--teal); }
+.delta-dn  { color: #ef4444; }
+
+/* ── Main Grid ── */
+.main-grid {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 18px;
+}
+
+/* ── Filters ── */
+.filter-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip {
+  padding: 5px 13px;
+  border-radius: 20px;
+  border: 1.5px solid rgba(11,143,122,0.2);
+  background: rgba(11,143,122,0.06);
+  color: var(--teal);
+  font-size: 0.74rem; font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.chip.active { background: var(--teal); color: #fff; border-color: var(--teal); }
+.chip:hover  { background: var(--teal); color: #fff; }
+
+/* ── Listings Table ── */
+.listings-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.listings-table th {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--muted);
+  font-weight: 600;
+  padding: 9px 10px;
+  text-align: left;
+  border-bottom: 2px solid var(--fog);
+}
+.listings-table td {
+  padding: 13px 10px;
+  border-bottom: 1px solid var(--fog);
+  font-size: 0.84rem;
+  vertical-align: middle;
+}
+.listings-table tr:last-child td { border-bottom: none; }
+.listings-table tr:hover td { background: #fafcff; }
+
+.farmer-cell { display: flex; align-items: center; gap: 10px; }
+.farmer-av   {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.7rem; font-weight: 700; color: #fff;
+  flex-shrink: 0;
+}
+.farmer-name { font-weight: 600; color: var(--ink); font-size: 0.85rem; }
+.farmer-loc  { font-size: 0.7rem; color: var(--muted); }
+
+.type-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 10px; border-radius: 20px;
+  font-size: 0.7rem; font-weight: 600;
+}
+.type-biochar  { background: #e6f7ed; color: #2d6a4f; }
+.type-pellets  { background: #fff3e0; color: #b45309; }
+.type-compost  { background: #f0f9ff; color: #0369a1; }
+.type-direct   { background: #fdf4ff; color: #7c3aed; }
+
+.qty-cell { display: flex; align-items: center; gap: 8px; }
+.qty-mini  { width: 50px; height: 6px; background: var(--fog); border-radius: 3px; overflow: hidden; }
+.qty-fill  { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--teal), var(--aqua)); }
+
+.bid-btn {
+  background: linear-gradient(135deg, var(--teal), var(--cyan));
+  color: #fff; border: none;
+  padding: 6px 14px; border-radius: 7px;
+  font-size: 0.74rem; font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.bid-btn:hover { transform: scale(1.05); box-shadow: 0 4px 12px rgba(11,143,122,0.3); }
+
+/* ── Active Orders ── */
+.order-card {
+  background: #fff;
+  border-radius: var(--r-lg);
+  padding: 18px;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 12px;
+  border-left: 4px solid var(--teal);
+}
+.order-card.amber { border-left-color: var(--amber); }
+.order-icon { font-size: 1.7rem; flex-shrink: 0; }
+.order-info { flex: 1; }
+.order-name { font-weight: 700; font-size: 0.88rem; color: var(--ink); }
+.order-meta { font-size: 0.73rem; color: var(--muted); margin-top: 2px; }
+.order-status {
+  display: inline-block;
+  padding: 3px 9px; border-radius: 20px;
+  font-size: 0.68rem; font-weight: 700;
+  margin-top: 6px;
+}
+.status-transit    { background: #fff8e1; color: #b45309; }
+.status-processing { background: #e6f7ed; color: #2d6a4f; }
+.order-price { font-family: 'DM Mono', monospace; font-weight: 700; font-size: 0.95rem; color: var(--ink); text-align: right; white-space: nowrap; }
+.order-price-label { font-size: 0.66rem; color: var(--muted); margin-top: 4px; text-align: right; }
+
+/* ── Demand Chart ── */
+.demand-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.demand-label   { font-size: 0.76rem; color: var(--text); width: 70px; flex-shrink: 0; }
+.demand-bg      { flex: 1; height: 22px; background: var(--fog); border-radius: 5px; overflow: hidden; }
+.demand-fill    { height: 100%; border-radius: 5px; display: flex; align-items: center; padding-left: 8px; font-size: 0.66rem; font-weight: 700; color: #fff; }
+.demand-val     { font-family: 'DM Mono', monospace; font-size: 0.76rem; font-weight: 600; color: var(--ink); width: 52px; text-align: right; }
+
+/* ── Alerts ── */
+.alert-item { display: flex; gap: 10px; padding: 11px 0; border-bottom: 1px solid var(--fog); }
+.alert-item:last-child { border-bottom: none; }
+.alert-dot { width: 7px; height: 7px; border-radius: 50%; margin-top: 6px; flex-shrink: 0; }
+.alert-text { font-size: 0.81rem; color: var(--text); line-height: 1.55; flex: 1; }
+.alert-time { font-size: 0.68rem; color: var(--muted); white-space: nowrap; }
+
+/* ── Bid Modal ── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 200;
+  display: none;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: #fff; border-radius: var(--r-xl);
+  padding: 28px; width: 380px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+.modal-title { font-family: 'Playfair Display', serif; font-size: 1.2rem; color: var(--ink); margin-bottom: 18px; }
+.modal-footer { display: flex; gap: 10px; margin-top: 20px; }
+
+@media (max-width: 1200px) {
+  .kpi-row   { grid-template-columns: 1fr 1fr; }
+  .main-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ SIDEBAR ═══════════ -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">🌱 AgroChar</div>
+    <div class="logo-sub">Residue Intelligence</div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-label">Procurement</div>
+      <div class="nav-item active"><span class="icon">🏠</span> Dashboard</div>
+      <div class="nav-item"><span class="icon">📋</span> Browse Listings</div>
+      <div class="nav-item"><span class="icon">🤝</span> Active Orders</div>
+      <div class="nav-item"><span class="icon">📦</span> Inventory</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Intelligence</div>
+      <div class="nav-item"><span class="icon">📊</span> Analytics</div>
+      <div class="nav-item"><span class="icon">💰</span> Pricing Trends</div>
+      <div class="nav-item"><span class="icon">🗺</span> Supply Map</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Account</div>
+      <div class="nav-item"><span class="icon">🔔</span> Alerts <span class="nav-badge" id="alertBadge">0</span></div>
+      <div class="nav-item"><span class="icon">⚙️</span> Settings</div>
+    </div>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="user-pill">
+      <div class="avatar" id="sidebarAvatar" style="background:linear-gradient(135deg,#0b8f7a,#12b89a);">GP</div>
+      <div class="user-info">
+        <div class="user-name" id="sidebarName">Loading…</div>
+        <div class="user-role" id="sidebarRole">Buyer</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- ═══════════ MAIN ═══════════ -->
+<main class="main">
+  <header class="topbar">
+    <div class="page-title display">Buyer Procurement Hub</div>
+    <div class="topbar-actions">
+      <button class="btn btn-outline" style="color:var(--teal);border-color:var(--teal);" onclick="openAlertSetup()">🔔 Set Alerts</button>
+      <button class="btn btn-primary-buyer" onclick="openPostRequirement()">+ Post Requirement</button>
+      <button class="btn btn-ghost" onclick="AuthService.logout()">Sign out</button>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <!-- KPIs -->
+    <div class="kpi-row" id="kpiRow">
+      <div class="kpi"><div class="kpi-icon" style="background:#e6f7ed;">🌿</div><div><div class="kpi-val skeleton" style="width:60px;height:24px;"></div><div class="kpi-label">Total Sourced</div></div></div>
+      <div class="kpi"><div class="kpi-icon" style="background:#fff3e0;">💰</div><div><div class="kpi-val skeleton" style="width:60px;height:24px;"></div><div class="kpi-label">Total Spend</div></div></div>
+      <div class="kpi"><div class="kpi-icon" style="background:#e8f4f8;">🤝</div><div><div class="kpi-val skeleton" style="width:60px;height:24px;"></div><div class="kpi-label">Farmer Partners</div></div></div>
+      <div class="kpi"><div class="kpi-icon" style="background:#fdf4ff;">📦</div><div><div class="kpi-val skeleton" style="width:60px;height:24px;"></div><div class="kpi-label">Active Orders</div></div></div>
+    </div>
+
+    <div class="main-grid">
+      <div>
+        <!-- Listings -->
+        <div class="card mb-20">
+          <div class="card-header">
+            <div class="card-title">📋 Available Listings</div>
+            <div class="filter-chips">
+              <div class="chip active" onclick="filterListings(this,'all')">All</div>
+              <div class="chip" onclick="filterListings(this,'biochar')">🪨 Biochar</div>
+              <div class="chip" onclick="filterListings(this,'pellets')">🔩 Pellets</div>
+              <div class="chip" onclick="filterListings(this,'compost')">♻️ Compost</div>
+            </div>
+          </div>
+          <div id="listingsContainer">
+            <div class="skeleton" style="height:52px;margin-bottom:10px;"></div>
+            <div class="skeleton" style="height:52px;margin-bottom:10px;"></div>
+            <div class="skeleton" style="height:52px;"></div>
+          </div>
+        </div>
+
+        <!-- Active Orders -->
+        <div>
+          <div class="card-header mb-16"><div class="card-title" style="color:var(--ink);">📦 Active Orders</div></div>
+          <div id="ordersList">
+            <div class="skeleton" style="height:90px;border-radius:16px;margin-bottom:12px;"></div>
+            <div class="skeleton" style="height:90px;border-radius:16px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Panel -->
+      <div>
+        <div class="card mb-20">
+          <div class="card-header"><div class="card-title">📊 Demand by Type</div></div>
+          <div id="demandChart"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><div class="card-title">🔔 Recent Alerts</div></div>
+          <div id="alertsList">
+            <div class="skeleton" style="height:44px;margin-bottom:10px;"></div>
+            <div class="skeleton" style="height:44px;margin-bottom:10px;"></div>
+            <div class="skeleton" style="height:44px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- Bid Modal -->
+<div class="modal-overlay" id="bidModal">
+  <div class="modal">
+    <div class="modal-title">🤝 Place a Bid</div>
+    <input type="hidden" id="bidListingId">
+    <div class="field-group mb-16">
+      <label class="field-label" style="color:var(--muted);">Your Price (₹/kg)</label>
+      <input class="field-input" type="number" id="bidPrice" step="0.10" placeholder="e.g. 6.00"
+        style="background:var(--fog);border:1px solid rgba(0,0,0,0.1);color:var(--text);">
+    </div>
+    <div class="field-group mb-16">
+      <label class="field-label" style="color:var(--muted);">Quantity (kg)</label>
+      <input class="field-input" type="number" id="bidQty" placeholder="e.g. 200"
+        style="background:var(--fog);border:1px solid rgba(0,0,0,0.1);color:var(--text);">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary-buyer" onclick="submitBid()">Submit Bid</button>
+      <button class="btn btn-ghost" onclick="closeBidModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container"></div>
+
+<script src="app.js"></script>
+<script>
+let allListings = [];
+let activeFilter = 'all';
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadProfile();
+  await loadKPIs();
+  await loadListings();
+  await loadOrders();
+  await loadAlerts();
+  renderDemandChart();
+});
+
+/* ─── Profile (GET /buyer/profile) ─── */
+async function loadProfile() {
+  try {
+    const p = USE_MOCK
+      ? { name: 'GreenPower Pvt.', city: 'Jalandhar', state: 'Punjab', initials: 'GP' }
+      : await AuthService.getMe();
+    document.getElementById('sidebarName').textContent = p.name;
+    document.getElementById('sidebarRole').textContent = `Buyer · ${p.city}`;
+    document.getElementById('sidebarAvatar').textContent = p.initials || p.name.slice(0,2).toUpperCase();
+  } catch(e) {}
+}
+
+/* ─── KPIs (GET /buyers/dashboard-summary) ─── */
+async function loadKPIs() {
+  try {
+    const d = USE_MOCK
+      ? { tonnes_sourced: 847, total_spend: 3420000, farmer_partners: 124, active_orders: 18 }
+      : await BuyerService.getDashboardSummary();
+
+    const kpis = [
+      { val: `${d.tonnes_sourced} t`,       delta: '↑ 14% this season', cls: 'delta-up' },
+      { val: UI.formatINR(d.total_spend),   delta: '↓ 8% vs last yr',   cls: 'delta-dn' },
+      { val: d.farmer_partners,             delta: '↑ 32 new this yr',  cls: 'delta-up' },
+      { val: d.active_orders,               delta: '3 need review',     cls: '' },
+    ];
+    document.querySelectorAll('#kpiRow .kpi').forEach((card, i) => {
+      card.querySelector('.kpi-val').outerHTML = `<div class="kpi-val">${kpis[i].val}</div>`;
+      const label = card.querySelector('.kpi-label');
+      label.insertAdjacentHTML('afterend', `<div class="kpi-delta ${kpis[i].cls}">${kpis[i].delta}</div>`);
+    });
+  } catch(e) {}
+}
+
+/* ─── Listings (GET /buyers/listings) ─── */
+async function loadListings(filter = 'all') {
+  const container = document.getElementById('listingsContainer');
+  UI.renderSkeletons(container, 4, 52);
+  try {
+    allListings = USE_MOCK ? MOCK.buyerListings : await BuyerService.getListings();
+    renderListings(allListings, filter);
+  } catch(e) {
+    container.innerHTML = '<div class="error-state">⚠️ Failed to load listings. <button onclick="loadListings()">Retry</button></div>';
+  }
+}
+
+function renderListings(data, filter = 'all') {
+  const filtered = filter === 'all' ? data : data.filter(l => l.type === filter);
+  const statusMap = { ready: ['#22c55e','Ready'], pending: ['#f59e0b','In 2 wks'], low: ['#ef4444','Low Stock'] };
+  const avatarColors = ['#4a7c59','#2a6496','#7c3aed','#b45309','#0b8f7a'];
+  const typeMap = { biochar:'type-biochar 🪨 Biochar', pellets:'type-pellets 🔩 Pellets', compost:'type-compost ♻️ Compost', direct:'type-direct 🌱 Direct' };
+
+  const html = `
+  <table class="listings-table">
+    <thead><tr>
+      <th>Farmer</th><th>Type</th><th>Qty Available</th>
+      <th>Price/kg</th><th>Distance</th><th>Status</th><th>Action</th>
+    </tr></thead>
+    <tbody>
+    ${filtered.map((l, i) => {
+      const [dotColor, statusText] = statusMap[l.status] || statusMap.ready;
+      const [typeClass, typeLabel] = (typeMap[l.type] || 'type-biochar 🪨 Biochar').split(' ');
+      const icon = typeLabel; // emoji
+      const pct  = Math.round((l.qty_kg / 2200) * 100);
+      const color = avatarColors[i % avatarColors.length];
+      return `<tr>
+        <td>
+          <div class="farmer-cell">
+            <div class="farmer-av" style="background:${color};">${l.initials}</div>
+            <div><div class="farmer-name">${l.farmer}</div><div class="farmer-loc">${l.location}</div></div>
+          </div>
+        </td>
+        <td><span class="type-badge ${typeClass}">${l.type === 'compost' ? '♻️ Compost' : l.type === 'pellets' ? '🔩 Pellets' : l.type === 'direct' ? '🌱 Direct' : '🪨 Biochar'}</span></td>
+        <td>
+          <div class="qty-cell">
+            <div class="qty-mini"><div class="qty-fill" style="width:${pct}%;"></div></div>
+            ${l.qty_kg >= 1000 ? (l.qty_kg/1000).toFixed(1)+' t' : l.qty_kg+' kg'}
+          </div>
+        </td>
+        <td class="mono" style="font-weight:600;">₹${l.price_per_kg.toFixed(2)}</td>
+        <td>${l.distance_km} km</td>
+        <td><span class="status-dot" style="background:${dotColor};"></span>${statusText}</td>
+        <td><button class="bid-btn" onclick="openBidModal(${l.id}, ${l.price_per_kg})">${l.status === 'pending' ? 'Reserve' : 'Bid Now'}</button></td>
+      </tr>`;
+    }).join('')}
+    </tbody>
+  </table>`;
+
+  document.getElementById('listingsContainer').innerHTML = filtered.length ? html : '<div class="error-state">No listings match this filter.</div>';
+}
+
+function filterListings(chip, type) {
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  chip.classList.add('active');
+  activeFilter = type;
+  renderListings(allListings, type);
+}
+
+/* ─── Orders (GET /buyers/orders) ─── */
+async function loadOrders() {
+  const list = document.getElementById('ordersList');
+  try {
+    const orders = USE_MOCK ? [
+      { icon:'🪨', name:'Biochar — 320 kg · Rajan Singh', meta:'Ordered Nov 14 · Expected Nov 21 · Ludhiana → Jalandhar', price: 1984, status:'transit', pct: 65 },
+      { icon:'🔩', name:'Pellets — 800 kg · Gurmail Singh', meta:'Ordered Nov 12 · Processing at farm', price: 3280, status:'processing', pct: 30, amber:true },
+    ] : await BuyerService.getOrders();
+
+    list.innerHTML = orders.map(o => `
+    <div class="order-card ${o.amber ? 'amber' : ''}">
+      <div class="order-icon">${o.icon}</div>
+      <div class="order-info">
+        <div class="order-name">${o.name}</div>
+        <div class="order-meta">${o.meta}</div>
+        <div class="progress-bg" style="margin-top:8px;">
+          <div class="progress-fill" style="width:${o.pct}%;background:${o.amber ? 'linear-gradient(90deg,#d4821a,#f0a824)' : 'linear-gradient(90deg,var(--teal),var(--aqua))'}"></div>
+        </div>
+      </div>
+      <div>
+        <div class="order-price">${UI.formatINR(o.price)}</div>
+        <div class="order-price-label" style="text-align:right;font-size:0.66rem;color:var(--muted);margin-top:4px;">
+          <span class="order-status ${o.status === 'transit' ? 'status-transit' : 'status-processing'}">${o.status === 'transit' ? '🚚 In Transit' : '⚙️ Processing'}</span>
+        </div>
+      </div>
+    </div>`).join('');
+  } catch(e) {}
+}
+
+/* ─── Alerts (GET /buyers/alerts) ─── */
+async function loadAlerts() {
+  const list = document.getElementById('alertsList');
+  try {
+    const alerts = USE_MOCK ? [
+      { color:'#22c55e', text:'New biochar listing from Rajan Singh (Ludhiana) — 320 kg at ₹6.20/kg', time:'2 hrs ago' },
+      { color:'#f59e0b', text:'Pellet prices in Amritsar up 4.2% — consider early lock-in', time:'5 hrs ago' },
+      { color:'#0ea5e9', text:'Standing order with Gurmail Singh confirmed for 2 t/month through March', time:'Yesterday' },
+      { color:'#ef4444', text:'Biochar supply tight next 4 weeks — delayed harvest in Ferozepur', time:'2 days ago' },
+    ] : await BuyerService.getAlerts();
+
+    document.getElementById('alertBadge').textContent = alerts.filter(a => a.color === '#22c55e').length;
+
+    list.innerHTML = alerts.map(a => `
+    <div class="alert-item">
+      <div class="alert-dot" style="background:${a.color};"></div>
+      <div class="alert-text">${a.text}</div>
+      <div class="alert-time">${a.time}</div>
+    </div>`).join('');
+  } catch(e) {}
+}
+
+/* ─── Demand Chart ─── */
+function renderDemandChart() {
+  const data = [
+    { label:'Biochar', pct:82, val:'847 t', color:'linear-gradient(90deg,#2d6a4f,#4aab7e)' },
+    { label:'Pellets',  pct:63, val:'612 t', color:'linear-gradient(90deg,#b45309,#d97706)' },
+    { label:'Compost',  pct:41, val:'380 t', color:'linear-gradient(90deg,#0369a1,#38bdf8)' },
+    { label:'Direct',   pct:22, val:'190 t', color:'linear-gradient(90deg,#7c3aed,#a78bfa)' },
+  ];
+  document.getElementById('demandChart').innerHTML = data.map(d => `
+  <div class="demand-bar-row">
+    <span class="demand-label">${d.label}</span>
+    <div class="demand-bg"><div class="demand-fill" style="width:${d.pct}%;background:${d.color};">${d.pct}%</div></div>
+    <span class="demand-val">${d.val}</span>
+  </div>`).join('');
+}
+
+/* ─── Bid Modal ─── */
+function openBidModal(listingId, currentPrice) {
+  document.getElementById('bidListingId').value = listingId;
+  document.getElementById('bidPrice').value = currentPrice;
+  document.getElementById('bidModal').classList.add('open');
+}
+function closeBidModal() {
+  document.getElementById('bidModal').classList.remove('open');
+}
+
+async function submitBid() {
+  const listingId  = document.getElementById('bidListingId').value;
+  const price      = parseFloat(document.getElementById('bidPrice').value);
+  const qty        = parseFloat(document.getElementById('bidQty').value);
+
+  if (!price || !qty) { UI.toast('Fill in both price and quantity.', 'error'); return; }
+
+  try {
+    if (!USE_MOCK) await BuyerService.submitBid(listingId, price, qty);
+    closeBidModal();
+    UI.toast(`Bid of ₹${price}/kg for ${qty} kg submitted!`, 'success');
+  } catch(e) { UI.toast('Bid failed. Try again.', 'error'); }
+}
+
+function openAlertSetup()      { UI.toast('Alert settings coming soon!', 'info'); }
+function openPostRequirement() { UI.toast('Post requirement form coming soon!', 'info'); }
+</script>
+</body>
+</html>
