@@ -1,0 +1,598 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AgroChar — Farmer Dashboard</title>
+<link rel="stylesheet" href="/frontend/assets/css/farmer.css">
+<style>
+/* ── Farmer Theme Overrides ── */
+body { background: var(--light); }
+
+.sidebar        { background: var(--soil); }
+.logo-mark      { color: var(--gold); }
+.nav-label      { color: rgba(255,255,255,0.35); }
+.nav-item       { color: rgba(255,255,255,0.55); }
+.nav-item:hover { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.9); }
+.nav-item.active { background: linear-gradient(135deg, var(--amber), var(--gold)); color: var(--soil); }
+.nav-badge { background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.7); }
+
+.topbar .page-title { color: var(--soil); }
+.card { background: #fff; }
+.card-title { color: var(--soil); }
+
+/* ── AI Tip Banner ── */
+.ai-banner {
+  background: linear-gradient(135deg, #1a3a2a, #0d2519);
+  border-radius: var(--r-xl);
+  padding: 18px 22px;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  margin-bottom: 22px;
+}
+.ai-banner-icon { font-size: 1.5rem; flex-shrink: 0; }
+.ai-banner-text { font-size: 0.83rem; color: rgba(255,255,255,0.72); line-height: 1.65; }
+.ai-banner-text strong { color: var(--leaf); font-weight: 600; }
+.ai-highlight {
+  display: inline-flex; gap: 4px;
+  padding: 3px 9px; border-radius: 20px;
+  font-size: 0.68rem; font-weight: 700; margin-left: 4px;
+}
+.ai-green  { background: rgba(106,171,126,0.18); color: var(--leaf); }
+.ai-amber  { background: rgba(212,130,26,0.18);  color: var(--gold); }
+
+/* ── Advisory Form ── */
+.advisory-card {
+  background: var(--soil);
+  border-radius: var(--r-xl);
+  padding: 30px;
+  margin-bottom: 26px;
+  position: relative;
+  overflow: hidden;
+}
+.advisory-card::before {
+  content: '';
+  position: absolute;
+  top: -50px; right: -50px;
+  width: 220px; height: 220px;
+  background: radial-gradient(circle, rgba(240,168,36,0.15), transparent 70%);
+  pointer-events: none;
+}
+.advisory-card::after {
+  content: '🌾';
+  position: absolute;
+  bottom: 16px; right: 28px;
+  font-size: 4.5rem;
+  opacity: 0.09;
+  pointer-events: none;
+}
+.advisory-title { font-family: 'Playfair Display', serif; font-size: 1.4rem; color: #fff; margin-bottom: 4px; }
+.advisory-sub   { font-size: 0.83rem; color: rgba(255,255,255,0.45); margin-bottom: 24px; }
+
+.input-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.advisory-card .field-label  { color: rgba(255,255,255,0.48); }
+.advisory-card .field-input  {
+  background: rgba(255,255,255,0.09);
+  border: 1px solid rgba(255,255,255,0.14);
+  color: #fff;
+}
+.advisory-card .field-input::placeholder { color: rgba(255,255,255,0.28); }
+.advisory-card .field-input:focus { border-color: var(--gold); background: rgba(255,255,255,0.13); }
+.advisory-card .field-input option { background: var(--soil); color: #fff; }
+
+/* ── Alternatives Grid ── */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.section-title { font-family: 'Playfair Display', serif; font-size: 1.15rem; color: var(--soil); }
+
+.alts-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.alt-card {
+  background: #fff;
+  border-radius: var(--r-lg);
+  padding: 20px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+.alt-card:hover       { border-color: var(--gold); transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,0,0,0.08); }
+.alt-card.best        { border-color: var(--sage); }
+.alt-card.selected    { border-color: var(--amber); background: #fffdf7; }
+
+.best-chip {
+  position: absolute; top: 12px; right: 12px;
+  background: var(--sage); color: #fff;
+  font-size: 0.6rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  padding: 3px 8px; border-radius: 20px;
+}
+
+.alt-icon  { font-size: 2rem; margin-bottom: 12px; }
+.alt-name  { font-weight: 700; font-size: 0.92rem; color: var(--soil); margin-bottom: 4px; }
+.alt-desc  { font-size: 0.76rem; color: var(--ash); line-height: 1.55; margin-bottom: 14px; }
+
+.alt-metric {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-top: 1px solid var(--light);
+}
+.alt-metric:first-child { border-top: none; }
+.metric-label { font-size: 0.7rem; color: var(--ash); }
+.metric-val   { font-family: 'DM Mono', monospace; font-size: 0.8rem; font-weight: 600; color: var(--soil); }
+.metric-val.green  { color: var(--sage); }
+.metric-val.amber  { color: var(--amber); }
+
+.viability {
+  height: 5px; background: var(--light);
+  border-radius: 3px; margin-top: 12px;
+  overflow: hidden;
+}
+.viability-fill { height: 100%; border-radius: 3px; }
+
+/* ── Bottom Grid ── */
+.bottom-grid {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 18px;
+}
+
+/* ── Buyers Table ── */
+.buyer-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--light);
+}
+.buyer-row:last-child { border-bottom: none; }
+.buyer-logo {
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem; flex-shrink: 0;
+}
+.buyer-info { flex: 1; }
+.buyer-name  { font-weight: 600; font-size: 0.86rem; color: var(--soil); }
+.buyer-meta  { font-size: 0.72rem; color: var(--ash); margin-top: 2px; }
+.buyer-dist  { font-size: 0.72rem; color: var(--sky); }
+.buyer-price { text-align: right; }
+.price-val   { font-family: 'DM Mono', monospace; font-weight: 700; font-size: 0.9rem; color: var(--sage); }
+.price-unit  { font-size: 0.66rem; color: var(--ash); }
+.connect-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 5px 12px;
+  background: var(--mist); color: var(--sky);
+  border: none; border-radius: 6px;
+  font-size: 0.72rem; font-weight: 600;
+  cursor: pointer; margin-top: 4px;
+  transition: all var(--transition);
+}
+.connect-btn:hover { background: var(--sky); color: #fff; }
+
+/* ── Income Bars ── */
+.income-row {
+  display: flex; align-items: center;
+  gap: 10px; margin-bottom: 9px;
+}
+.income-label { font-size: 0.76rem; color: var(--smoke); width: 52px; flex-shrink: 0; }
+.income-bar-bg { flex: 1; height: 22px; background: var(--light); border-radius: 5px; overflow: hidden; }
+.income-bar {
+  height: 100%; border-radius: 5px;
+  display: flex; align-items: center; padding-left: 8px;
+  font-size: 0.68rem; font-weight: 700; color: #fff;
+  transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.income-amt { font-family: 'DM Mono', monospace; font-size: 0.76rem; font-weight: 600; color: var(--soil); width: 62px; text-align: right; }
+
+/* ── Roadmap Timeline ── */
+.tl-item { display: flex; gap: 12px; margin-bottom: 16px; }
+.tl-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--amber);
+  margin-top: 5px; flex-shrink: 0;
+  position: relative;
+}
+.tl-dot::after {
+  content: '';
+  position: absolute;
+  left: 4px; top: 10px;
+  width: 2px; height: calc(100% + 12px);
+  background: rgba(212,130,26,0.18);
+}
+.tl-item:last-child .tl-dot::after { display: none; }
+.tl-month { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--amber); font-weight: 700; }
+.tl-text  { font-size: 0.81rem; color: var(--smoke); line-height: 1.55; }
+
+/* Location badge */
+.location-badge {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 13px; background: var(--light);
+  border-radius: 20px; font-size: 0.78rem; color: var(--soil);
+}
+
+@media (max-width: 1300px) {
+  .input-grid  { grid-template-columns: 1fr 1fr; }
+  .alts-grid   { grid-template-columns: 1fr 1fr; }
+  .bottom-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ SIDEBAR ═══════════ -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">🌱 AgroChar</div>
+    <div class="logo-sub">Residue Intelligence</div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-label">Farmer Tools</div>
+      <div class="nav-item active"><span class="icon">🏠</span> Dashboard</div>
+      <div class="nav-item"><span class="icon">🌾</span> My Fields</div>
+      <div class="nav-item"><span class="icon">🧪</span> Soil Reports</div>
+      <div class="nav-item"><span class="icon">📦</span> My Listings</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Market</div>
+      <div class="nav-item"><span class="icon">🤝</span> Buyers Nearby</div>
+      <div class="nav-item"><span class="icon">💰</span> Earnings</div>
+      <div class="nav-item"><span class="icon">📊</span> <a href="/analytics/analytics.html" >Analytics</a></div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Support</div>
+      <div class="nav-item"><span class="icon">📚</span> Learn</div>
+      <div class="nav-item"><span class="icon">⚙️</span> Settings</div>
+    </div>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="user-pill">
+      <div class="avatar" id="sidebarAvatar" style="background:linear-gradient(135deg,#d4821a,#f0a824);">RS</div>
+      <div class="user-info">
+        <div class="user-name" id="sidebarName">Loading…</div>
+        <div class="user-role" id="sidebarRole">Farmer</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- ═══════════ MAIN ═══════════ -->
+<main class="main">
+  <header class="topbar">
+    <div class="page-title display">Advisory Dashboard</div>
+    <div class="topbar-actions">
+      <div class="location-badge" id="locationBadge">📍 Loading…</div>
+      <button class="btn btn-ghost" onclick="AuthService.logout()">Sign out</button>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <!-- AI Banner -->
+    <div class="ai-banner" id="aiBanner">
+      <span class="ai-banner-icon">🤖</span>
+      <div class="ai-banner-text">
+        <strong>AI Advisor:</strong> <span id="aiMessage">Analyzing your field data…</span>
+        <span class="ai-highlight ai-green" id="aiTag1"></span>
+        <span class="ai-highlight ai-amber" id="aiTag2"></span>
+      </div>
+    </div>
+
+    <!-- Advisory Form -->
+    <div class="advisory-card">
+      <div class="advisory-title">Get Your Custom Recommendation</div>
+      <div class="advisory-sub">Enter your field details for a personalized alternative-to-burning plan</div>
+      <div class="input-grid">
+        <div class="field-group">
+          <label class="field-label">Field Size (Acres)</label>
+          <input class="field-input" type="number" id="fieldSize" placeholder="e.g. 8" min="0.5" step="0.5">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Crop Type</label>
+          <select class="field-input" id="cropType">
+            <option value="">Select crop…</option>
+            <option value="">Wheat </option>
+            <option value="">Rice</option>
+            <option value="">Cotton</option>
+            <option value="">Sugarcane</option>
+
+               
+          </select>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Location / District</label>
+          <input class="field-input" type="text" id="location" placeholder="e.g. Ludhiana">
+        </div>
+      </div>
+      <button class="btn btn-primary-farmer" id="analyzeBtn" onclick="runAnalysis()">
+        ✨ Analyze &amp; Recommend
+      </button>
+    </div>
+
+    <!-- Alternatives -->
+    <div class="section-header">
+      <div class="section-title">💡 Recommended Alternatives</div>
+      <span class="badge badge-green" id="altCount" style="display:none;"></span>
+    </div>
+    <div class="alts-grid" id="altsGrid">
+      <!-- Populated by JS -->
+      <div class="skeleton" style="height:260px;border-radius:16px;"></div>
+      <div class="skeleton" style="height:260px;border-radius:16px;"></div>
+      <div class="skeleton" style="height:260px;border-radius:16px;"></div>
+      <div class="skeleton" style="height:260px;border-radius:16px;"></div>
+    </div>
+
+    <!-- Bottom Grid -->
+    <div class="bottom-grid">
+
+      <div>
+        <!-- Buyers -->
+        <div class="card mb-20">
+          <div class="card-header">
+            <div class="card-title">🤝 Nearby Buyers &amp; Aggregators</div>
+            <button class="btn btn-ghost" onclick="loadBuyers()" style="font-size:0.78rem;padding:5px 10px;">Refresh</button>
+          </div>
+          <div id="buyersList">
+            <div class="skeleton" style="height:60px;margin-bottom:10px;"></div>
+            <div class="skeleton" style="height:60px;margin-bottom:10px;"></div>
+            <div class="skeleton" style="height:60px;"></div>
+          </div>
+        </div>
+
+        <!-- Income Projection -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📈 5-Year Income Projection</div>
+            <span class="badge badge-green" id="projBadge">Biochar</span>
+          </div>
+          <div id="incomeChart"></div>
+        </div>
+      </div>
+
+      <!-- Timeline -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">🗓 Implementation Roadmap</div></div>
+        <div id="roadmapList">
+          <div class="skeleton" style="height:50px;margin-bottom:14px;"></div>
+          <div class="skeleton" style="height:50px;margin-bottom:14px;"></div>
+          <div class="skeleton" style="height:50px;"></div>
+        </div>
+      </div>
+
+    </div>
+  </div><!-- /content -->
+</main>
+
+<!-- Toast container -->
+<div class="toast-container"></div>
+
+<script src="app.js"></script>
+<script>
+/* ─── Page Bootstrap ─── */
+document.addEventListener('DOMContentLoaded', async () => {
+  // Load crops into dropdown
+  await loadCropOptions();
+  // Load farmer profile
+  await loadProfile();
+  // Load default recommendations (mock until form is submitted)
+  await renderAlternatives(MOCK.advisoryResult.alternatives);
+  await loadBuyers();
+  renderIncome(MOCK.advisoryResult.alternatives[0].type);
+  renderRoadmap(MOCK.advisoryResult.roadmap);
+  updateAIBanner();
+});
+
+/* ─── Load crop types (GET /crops) ─── */
+async function loadCropOptions() {
+  const sel = document.getElementById('cropType');
+  try {
+    const crops = USE_MOCK
+      ? ['Rice (Paddy)', 'Wheat', 'Sugarcane', 'Maize', 'Cotton']
+      : (await CropService.getCrops()).map(c => c.name);
+    crops.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c; opt.textContent = c;
+      sel.appendChild(opt);
+    });
+    sel.value = crops[0];
+  } catch (e) { console.warn('Crop load failed', e); }
+}
+
+/* ─── Load farmer profile (GET /farmer/profile) ─── */
+async function loadProfile() {
+  try {
+    const profile = USE_MOCK
+      ? { name: 'Rajan Singh', district: 'Ludhiana', state: 'Punjab' }
+      : await FarmerService.getProfile();
+
+    document.getElementById('sidebarName').textContent  = profile.name;
+    document.getElementById('sidebarRole').textContent  = `Farmer · ${profile.state}`;
+    document.getElementById('sidebarAvatar').textContent = profile.name.split(' ').map(w=>w[0]).join('');
+    document.getElementById('locationBadge').innerHTML = `📍 ${profile.district}, ${profile.state}`;
+    document.getElementById('location').value = profile.district;
+  } catch(e) { console.warn('Profile load failed', e); }
+}
+
+/* ─── Analyze (POST /advisory/analyze) ─── */
+async function runAnalysis() {
+  const btn      = document.getElementById('analyzeBtn');
+  const fieldSize = document.getElementById('fieldSize').value;
+  const cropType  = document.getElementById('cropType').value;
+  const location  = document.getElementById('location').value;
+
+  if (!fieldSize || !cropType || !location) {
+    UI.toast('Please fill all fields before analyzing.', 'error');
+    return;
+  }
+
+  UI.setLoading(btn, true);
+  UI.renderSkeletons(document.getElementById('altsGrid'), 4, 260);
+
+  try {
+    const result = USE_MOCK
+      ? MOCK.advisoryResult
+      : await AdvisoryService.analyze({ fieldSize, cropType, location });
+
+    await renderAlternatives(result.alternatives);
+    renderRoadmap(result.roadmap);
+    renderIncome(result.alternatives[0].type);
+    updateAIBanner(result, cropType, fieldSize);
+    UI.toast('Analysis complete! Scroll down to see your plan.', 'success');
+  } catch (e) {
+    UI.toast('Analysis failed. Please try again.', 'error');
+    console.error(e);
+  } finally {
+    UI.setLoading(btn, false, '✨ Analyze & Recommend');
+  }
+}
+
+/* ─── Render Alternative Cards ─── */
+async function renderAlternatives(alts) {
+  const grid = document.getElementById('altsGrid');
+  grid.innerHTML = alts.map(a => {
+    const colors = {
+      biochar:    'linear-gradient(90deg,#4a7c59,#6aab7e)',
+      pellets:    'linear-gradient(90deg,#d4821a,#f0a824)',
+      composting: 'linear-gradient(90deg,#2a6496,#5ba3cc)',
+      direct:     'linear-gradient(90deg,#7b4f00,#d4821a)',
+    };
+    return `
+    <div class="alt-card ${a.is_best ? 'best' : ''}" onclick="selectAlt(this, '${a.type}')">
+      ${a.is_best ? '<div class="best-chip">⭐ Best Match</div>' : ''}
+      <div class="alt-icon">${a.icon}</div>
+      <div class="alt-name">${a.name}</div>
+      <div class="alt-desc">${a.desc}</div>
+      <div class="alt-metrics">
+        <div class="alt-metric"><span class="metric-label">Setup Cost</span><span class="metric-val amber">${UI.formatINR(a.setup_cost)}</span></div>
+        <div class="alt-metric"><span class="metric-label">Annual Income</span><span class="metric-val green">${UI.formatINR(a.annual_income)}</span></div>
+        <div class="alt-metric"><span class="metric-label">Break-even</span><span class="metric-val">${a.breakeven_months} months</span></div>
+      </div>
+      <div class="viability"><div class="viability-fill" style="width:${a.viability_pct}%;background:${colors[a.type] || colors.biochar};"></div></div>
+    </div>`;
+  }).join('');
+
+  const badge = document.getElementById('altCount');
+  badge.textContent = `${alts.length} options found`;
+  badge.style.display = 'inline-flex';
+}
+
+function selectAlt(card, type) {
+  document.querySelectorAll('.alt-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+  renderIncome(type);
+  document.getElementById('projBadge').textContent = type.charAt(0).toUpperCase() + type.slice(1);
+}
+
+/* ─── Load Buyers (GET /buyers/nearby) ─── */
+async function loadBuyers() {
+  const district = document.getElementById('location').value || 'Ludhiana';
+  const list = document.getElementById('buyersList');
+  UI.renderSkeletons(list, 3, 60);
+
+  try {
+    const buyers = USE_MOCK
+      ? MOCK.nearbyBuyers
+      : await BuyerService.getNearbyBuyers(district);
+
+    const logos = { biochar: ['#e8f7ed','🏭'], pellets: ['#fff3e0','⚡'], composting: ['#e8f4f8','🧪'], default: ['#f0f0ff','🤝'] };
+
+    list.innerHTML = buyers.map(b => {
+      const [bg, icon] = logos[b.type] || logos.default;
+      return `
+      <div class="buyer-row">
+        <div class="buyer-logo" style="background:${bg};">${icon}</div>
+        <div class="buyer-info">
+          <div class="buyer-name">${b.name}</div>
+          <div class="buyer-meta">${b.type.charAt(0).toUpperCase()+b.type.slice(1)} Buyer</div>
+          <div class="buyer-dist">📍 ${b.distance_km} km · ${b.location}</div>
+          <button class="connect-btn" onclick="connectBuyer(${b.id})">📞 Connect</button>
+        </div>
+        <div class="buyer-price">
+          <div class="price-val">₹${b.price_per_kg.toFixed(2)}</div>
+          <div class="price-unit">/kg ${b.type}</div>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    list.innerHTML = '<div class="error-state">⚠️ Could not load buyers. <button onclick="loadBuyers()">Retry</button></div>';
+  }
+}
+
+async function connectBuyer(buyerId) {
+  try {
+    if (!USE_MOCK) await BuyerService.connectWithFarmer(buyerId, 'Interested in selling residue');
+    UI.toast('Connection request sent!', 'success');
+  } catch(e) { UI.toast('Failed to connect. Try again.', 'error'); }
+}
+
+/* ─── Income Projection Chart ─── */
+function renderIncome(type) {
+  const projections = {
+    biochar:    [{ yr:'Year 1', v:9000, pct:12 }, { yr:'Year 2', v:32000, pct:42 }, { yr:'Year 3', v:54000, pct:70 }, { yr:'Year 4', v:63000, pct:82 }, { yr:'Year 5', v:78000, pct:100 }],
+    pellets:    [{ yr:'Year 1', v:0,    pct:0  }, { yr:'Year 2', v:18000, pct:25 }, { yr:'Year 3', v:48000, pct:67 }, { yr:'Year 4', v:72000, pct:100}, { yr:'Year 5', v:86000, pct:100 }],
+    composting: [{ yr:'Year 1', v:12000,pct:50 }, { yr:'Year 2', v:24000, pct:100}, { yr:'Year 3', v:28000, pct:100}, { yr:'Year 4', v:30000, pct:100}, { yr:'Year 5', v:32000, pct:100 }],
+    direct:     [{ yr:'Year 1', v:10000,pct:56 }, { yr:'Year 2', v:18000, pct:100}, { yr:'Year 3', v:20000, pct:100}, { yr:'Year 4', v:22000, pct:100}, { yr:'Year 5', v:24000, pct:100 }],
+  };
+  const colors = { biochar:'linear-gradient(90deg,#4a7c59,#6aab7e)', pellets:'linear-gradient(90deg,#d4821a,#f0a824)', composting:'linear-gradient(90deg,#2a6496,#5ba3cc)', direct:'linear-gradient(90deg,#7b4f00,#d4821a)' };
+  const data = projections[type] || projections.biochar;
+  const col  = colors[type] || colors.biochar;
+
+  document.getElementById('incomeChart').innerHTML = data.map(d => `
+    <div class="income-row">
+      <span class="income-label">${d.yr}</span>
+      <div class="income-bar-bg"><div class="income-bar" style="width:${d.pct}%;background:${col};">${d.yr.replace('Year ','Yr')}</div></div>
+      <span class="income-amt">${UI.formatINR(d.v)}</span>
+    </div>`).join('');
+}
+
+/* ─── Roadmap ─── */
+function renderRoadmap(steps) {
+  document.getElementById('roadmapList').innerHTML = steps.map((s, i) => `
+    <div class="tl-item">
+      <div class="tl-dot" ${i === steps.length-1 ? 'style="background:var(--sage);"' : ''}></div>
+      <div>
+        <div class="tl-month" ${i === steps.length-1 ? 'style="color:var(--sage);"' : ''}>${s.month}</div>
+        <div class="tl-text">${s.text}</div>
+      </div>
+    </div>`).join('');
+}
+
+/* ─── AI Banner ─── */
+function updateAIBanner(result, crop, acres) {
+  const msg = result
+    ? `Based on your <strong>${acres}-acre ${crop}</strong> field, you could earn <strong>${UI.formatINR(result.alternatives[0].annual_income)}</strong>/yr through ${result.alternatives[0].name}. ${result.alternatives[0].name} has the highest demand from ${MOCK.nearbyBuyers.length} nearby buyers.`
+    : `Based on your region and harvest season (Oct–Nov), burning will peak in 3 weeks. Your field can generate <strong>₹38,000–₹54,000</strong> annually through biochar or pellet alternatives.`;
+
+  document.getElementById('aiMessage').innerHTML = msg;
+  document.getElementById('aiTag1').textContent = '✓ Low Risk';
+  document.getElementById('aiTag2').textContent = '⏱ Act in 18 days';
+}
+</script>
+<script src="/frontend/assets/js/config/api.js"></script>
+
+</body>
+</html>

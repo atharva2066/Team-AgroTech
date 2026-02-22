@@ -52,4 +52,8 @@ graph TB
     F --> G[Dashboard Output<br/>Top 3 Options + Buyers]
     
     style A fill:#e1f5fe
+<<<<<<< HEAD
     style G fill:#c8e6c9
+=======
+    style G fill:#c8e6c9
+>>>>>>> 0a1d870768ce34736b2d646a1465937d665e8dd4
