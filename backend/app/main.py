@@ -10,7 +10,7 @@ app = FastAPI()
 # Root route
 @app.get("/")
 async def root():
-    return {"message": "Backend is running"}
+    return {"message": "Backend is running 🚀"}
 
 # CORS
 app.add_middleware(
