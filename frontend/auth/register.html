@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>AgriResidue AI - Register</title>
+
+  <!-- Link External CSS -->
+  <link rel="stylesheet" href="/frontend/assets/css/register.css" />
+</head>
+
+<body>
+
+<div class="register-card">
+  <h2>Create Account</h2>
+
+  <input id="name" type="text" placeholder="Full Name" />
+  <input id="phone" type="text" placeholder="Phone Number" />
+  <input id="password" type="password" placeholder="Password" />
+
+  <select id="role">
+    <option value="farmer">Farmer</option>
+    <option value="company">Company</option>
+  </select>
+
+  <button onclick="handleRegister()">Register</button>
+
+  <p class="note">Already have an account? <a href="login.html">Login</a></p>
+</div>
+
+<!-- External JS -->
+<script src="/frontend/assets/js/config/api.js"></script>
+<script src="/frontend/assets/js/auth/register.js"></script>
+
+</body>
+</html>
